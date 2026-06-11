@@ -6,7 +6,7 @@ function App() {
   const [error, setError] = useState(null);
 
   // Hardcoded to look directly at your local Spring Boot REST API
-  const API_URL = 'http://localhost:8080';
+  const API_URL = 'https://cms-backend-owe3.onrender.com';
 
   useEffect(() => {
     fetch(`${API_URL}/api/students`)
