@@ -1,78 +1,53 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Layout from './components/Layout';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Students from './pages/Students';
+import Staff from './pages/Staff';
+import Classes from './pages/Classes';
+import Attendance from './pages/Attendance';
+import Exams from './pages/Exams';
+import Reports from './pages/Reports';
 
-function App() {
-  const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Hardcoded to look directly at your local Spring Boot REST API
-  const API_URL = 'https://cms-backend-owe3.onrender.com';
-
-  useEffect(() => {
-    fetch(`${API_URL}/api/students`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error('Could not pull data from the Java backend');
-        }
-        return response.json();
-      })
-      .then((data) => {
-        setStudents(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching data: ", err);
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
-
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  
   if (loading) {
     return (
-      <div style={{ padding: '40px', fontFamily: 'Arial, sans-serif', textAlign: 'center' }}>
-        <h3>Loading student roster...</h3>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
       </div>
     );
   }
-
-  if (error) {
-    return (
-      <div style={{ padding: '40px', fontFamily: 'Arial, sans-serif', textAlign: 'center', color: 'red' }}>
-        <h3>Error: {error}</h3>
-        <p>Make sure your Spring Boot application is actively running on port 8080!</p>
-      </div>
-    );
+  
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
+  
+  return <Layout>{children}</Layout>;
+};
 
+function App() {
   return (
-    <div style={{ padding: '40px', fontFamily: 'Arial, sans-serif', maxWidth: '900px', margin: '0 auto' }}>
-      <h2 style={{ color: '#2c3e50', borderBottom: '2px solid #2c3e50', paddingBottom: '10px' }}>
-        Coaching Management System - Student Roster
-      </h2>
-
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-        <thead>
-          <tr style={{ backgroundColor: '#2c3e50', color: 'white', textAlign: 'left' }}>
-            <th style={{ padding: '12px' }}>ID</th>
-            <th style={{ padding: '12px' }}>First Name</th>
-            <th style={{ padding: '12px' }}>Last Name</th>
-            <th style={{ padding: '12px' }}>Email</th>
-            <th style={{ padding: '12px' }}>Phone</th>
-          </tr>
-        </thead>
-        <tbody>
-          {students.map((student) => (
-            <tr key={student.id} style={{ borderBottom: '1px solid #dddddd' }}>
-              <td style={{ padding: '12px', fontWeight: 'bold' }}>{student.id}</td>
-              <td style={{ padding: '12px' }}>{student.firstName}</td>
-              <td style={{ padding: '12px' }}>{student.lastName}</td>
-              <td style={{ padding: '12px' }}>{student.email}</td>
-              <td style={{ padding: '12px' }}>{student.phone || 'N/A'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
+          <Route path="/staff" element={<ProtectedRoute><Staff /></ProtectedRoute>} />
+          <Route path="/classes" element={<ProtectedRoute><Classes /></ProtectedRoute>} />
+          <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
+          <Route path="/exams" element={<ProtectedRoute><Exams /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
